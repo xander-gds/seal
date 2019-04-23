@@ -30,6 +30,7 @@ RSpec.describe Seal do
   describe ".bark(mode: nil)" do
     before do
       allow(SlackPoster).to receive(:new).and_return(slack_poster)
+      Timecop.freeze(Time.local(2019, 01, 02))
     end
 
     it "barks at all teams" do
@@ -49,6 +50,21 @@ RSpec.describe Seal do
         expect(SlackPoster).to receive(:new).with(lions.channel, anything)
 
         subject.bark(mode: "quotes")
+      end
+    end
+
+    context "on a bank holiday" do
+      before do
+        Timecop.freeze(Time.local(2019, 01, 01))
+      end
+
+      it "barks bank holiday message at all teams" do
+        teams.each do |team|
+          expect(Message).to receive(:new).with("No PRs to review, it's a bank holiday :bunting:", mood: "approval").and_return(message)
+          expect(SlackPoster).to receive(:new).with(team.channel, anything)
+        end
+
+        subject.bark
       end
     end
   end

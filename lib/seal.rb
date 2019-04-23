@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
+require_relative "bank_holiday_check"
 require_relative "message_builder"
 require_relative "slack_poster"
 
@@ -24,7 +25,11 @@ class Seal
     when "quotes"
       Message.new(team.quotes.sample)
     else
-      MessageBuilder.new(team).build
+      if BankHolidayCheck.new.is_bank_holiday?(DateTime.now.strftime("%Y-%m-%d"))
+        Message.new(BankHolidayCheck.new.bank_holiday_message, mood: "approval")
+      else
+        MessageBuilder.new(team).build
+      end
     end
 
     poster = SlackPoster.new(team.channel, message.mood)
